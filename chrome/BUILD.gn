@@ -169,6 +169,7 @@ if (!is_android && !is_mac) {
       "//build:chromeos_buildflags",
       "//printing/buildflags",
     ]
+    deps += [ "//nova/platform/entry" ]
     data = [ "$root_out_dir/resources.pak" ]
     data_deps = []
 

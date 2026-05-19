@@ -217,6 +217,8 @@
 #include "ui/ozone/public/ozone_platform.h"
 #endif  // BUILDFLAG(IS_OZONE)
 
+#include "nova/platform/entry/entry.h"
+
 base::LazyInstance<ChromeContentGpuClient>::DestructorAtExit
     g_chrome_content_gpu_client = LAZY_INSTANCE_INITIALIZER;
 base::LazyInstance<ChromeContentRendererClient>::DestructorAtExit
@@ -1646,6 +1648,7 @@ ChromeMainDelegate::CreateContentUtilityClient() {
 }
 
 std::optional<int> ChromeMainDelegate::PreBrowserMain() {
+  nova::PreBrowserMain();
   std::optional<int> exit_code = content::ContentMainDelegate::PreBrowserMain();
   if (exit_code.has_value())
     return exit_code;

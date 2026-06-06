@@ -97,9 +97,6 @@ config("feature_flags") {
   if (is_official_build) {
     defines += [ "OFFICIAL_BUILD" ]
   }
-  if (enable_nova) {
-    defines += [ "ENABLE_NOVA" ]
-  }
 
   # ==============================================
   #   PLEASE DO NOT ADD MORE THINGS TO THIS LIST

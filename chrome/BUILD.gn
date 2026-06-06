@@ -169,10 +169,6 @@ if (!is_android && !is_mac) {
       "//build:chromeos_buildflags",
       "//printing/buildflags",
     ]
-
-    if (enable_nova) {
-      deps += [ "//nova/platform/entry" ]
-    }
     data = [ "$root_out_dir/resources.pak" ]
     data_deps = []
 
@@ -1141,9 +1137,6 @@ if (is_win) {
       "//content/public/app",
       "//third_party/cld_3/src/src:cld_3",
     ]
-    if (enable_nova) {
-      deps += [ "//nova/platform/entry" ]
-    }
 
     if (is_chromeos) {
       deps += [ "//chrome/browser/ash/schedqos" ]

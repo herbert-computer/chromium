@@ -657,7 +657,6 @@ artifact_zip("updater_zip") {
 # TODO: make crx3 file
 group("chromium_crx3_package") {
   deps = [
-    "//chrome/updater/mac/crx3:stage_chromium_app",
-    "//chrome/updater/mac/crx3:stage_install_script",
+    "//chrome/updater/mac/crx3:chromium_crx3_zip",
   ]
 }

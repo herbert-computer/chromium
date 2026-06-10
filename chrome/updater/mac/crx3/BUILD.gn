@@ -43,3 +43,20 @@ action("stage_install_script") {
     chrome_version_full,
   ]
 }
+
+# 3) Package the staging directory into a ZIP archive
+action("chromium_crx3_zip") {
+  script = "zip_dir.py"
+  deps = [
+    ":stage_chromium_app",
+    ":stage_install_script",
+  ]
+  sources = [
+    "//build/zip_helpers.py",
+  ]
+  outputs = [ "$target_gen_dir/chromium_crx3.zip" ]
+  args = [
+    rebase_path(_chromium_crx3_staging_dir, root_build_dir),
+    rebase_path(outputs[0], root_build_dir),
+  ]
+}

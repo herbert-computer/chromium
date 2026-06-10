@@ -1,0 +1,45 @@
+import("//build/compiled_action.gni")
+import("//chrome/updater/branding.gni")
+import("//chrome/version.gni")
+
+assert(is_mac, "This target is only supported on macOS")
+
+# CRX3 Packaging Configuration (macOS Only)
+#
+# Flat structure inside the CRX3 package:
+#   .install                         <- Installation script
+#   Chromium.app/Contents/MacOS/...  <- App bundle files (included directly)
+
+_chromium_crx3_staging_dir = "$target_gen_dir/chromium_crx3_staging"
+
+# 1) Copy the Chromium.app directory into the staging area
+action("stage_chromium_app") {
+  script = "//build/gn_run_binary.py"
+  deps = [ "//chrome:chrome_app" ]
+  outputs = [ "$_chromium_crx3_staging_dir/.chromium_app_stamp" ]
+  args = [
+    "/bin/bash",
+    "-c",
+    "rm -rf " + rebase_path("$_chromium_crx3_staging_dir/Chromium.app", root_build_dir) +
+        " && /bin/cp -R " +
+        rebase_path("$root_out_dir/Chromium.app", root_build_dir) + " " +
+        rebase_path("$_chromium_crx3_staging_dir/Chromium.app", root_build_dir) +
+        " && touch " +
+        rebase_path("$_chromium_crx3_staging_dir/.chromium_app_stamp", root_build_dir),
+  ]
+}
+
+# 2) Inject the version into the existing updater .install.sh and stage it as .install
+action("stage_install_script") {
+  script = "//chrome/updater/mac/embed_variables.py"
+  sources = [ "//chrome/updater/mac/.install.sh" ]
+  outputs = [ "$_chromium_crx3_staging_dir/.install" ]
+  args = [
+    "-i",
+    rebase_path("//chrome/updater/mac/.install.sh", root_build_dir),
+    "-o",
+    rebase_path(outputs[0], root_build_dir),
+    "-v",
+    chrome_version_full,
+  ]
+}

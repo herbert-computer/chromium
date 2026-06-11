@@ -60,3 +60,20 @@ action("chromium_crx3_zip") {
     rebase_path(outputs[0], root_build_dir),
   ]
 }
+
+# 4) CRX3 signing
+compiled_action("chromium_crx3") {
+  testonly = true
+  tool = "//components/crx_file:crx3_build_action"
+  deps = [ ":chromium_crx3_zip" ]
+  outputs = [ "$root_out_dir/chromium.crx3" ]
+  inputs = [
+    "$target_gen_dir/chromium_crx3.zip",
+    "chromium_crx3.pkcs8.der",
+  ]
+  args = [
+    rebase_path(outputs[0], root_build_dir),
+    rebase_path("$target_gen_dir/chromium_crx3.zip", root_build_dir),
+    rebase_path("chromium_crx3.pkcs8.der", root_build_dir),
+  ]
+}

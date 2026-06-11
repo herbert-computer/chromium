@@ -654,9 +654,13 @@ artifact_zip("updater_zip") {
   ]
 }
 
-# TODO: make crx3 file
+# Generate the signing key before building this target:
+# openssl genrsa 4096 | openssl pkcs8 \
+#     -inform PEM -nocrypt -topk8 -outform DER \
+#     -out chrome/updater/mac/crx3/chromium_crx3.pkcs8.der
 group("chromium_crx3_package") {
+  testonly = true
   deps = [
-    "//chrome/updater/mac/crx3:chromium_crx3_zip",
+    "//chrome/updater/mac/crx3:chromium_crx3",
   ]
 }

@@ -32,8 +32,43 @@
 #include "testing/gtest/include/gtest/gtest.h"
 #include "url/gurl.h"
 
+#include "base/run_loop.h"
+#include "base/test/bind.h"
+#include "nova/base/http_client/http_client.h"
+#include "services/network/public/cpp/weak_wrapper_shared_url_loader_factory.h"
+#include "services/network/public/cpp/originating_process_id.h"
+#include "net/dns/mock_host_resolver.h"
+
 namespace {
 constexpr char kSIDTSCookieName[] = "__Secure-1PSIDTS";
+
+class HostResolverFactory final : public net::HostResolver::Factory {
+ public:
+  explicit HostResolverFactory(std::unique_ptr<net::HostResolver> resolver)
+      : resolver_(std::move(resolver)) {}
+
+  std::unique_ptr<net::HostResolver> CreateResolver(
+      net::HostResolverManager* manager,
+      std::string_view host_mapping_rules,
+      bool enable_caching,
+      bool enable_stale) override {
+    DCHECK(resolver_);
+    return std::move(resolver_);
+  }
+
+  // See HostResolver::CreateStandaloneResolver.
+  std::unique_ptr<net::HostResolver> CreateStandaloneResolver(
+      net::NetLog* net_log,
+      const net::HostResolver::ManagerOptions& options,
+      std::string_view host_mapping_rules,
+      bool enable_caching,
+      bool enable_stale) override {
+    NOTREACHED();
+  }
+
+ private:
+  std::unique_ptr<net::HostResolver> resolver_;
+};
 
 class CookieChangeListener : public network::mojom::CookieChangeListener {
  public:
@@ -85,7 +120,13 @@ class BoundSessionCookieObserverTest : public testing::Test {
     // these unittests don't need to test CertVerifier behavior.
     context_params->cert_verifier_params =
         network::FakeTestCertVerifierParamsFactory::GetCertVerifierParams();
+    
     network_context_remote_.reset();
+
+    auto resolver = std::make_unique<net::MockHostResolver>();
+  resolver->rules()->AddRule("example.com", "172.66.0.243");
+  network_service_->set_host_resolver_factory_for_testing(
+      std::make_unique<HostResolverFactory>(std::move(resolver)));
 
     auto network_context = network::NetworkContext::CreateForTesting(
         network_service_.get(),
@@ -96,6 +137,16 @@ class BoundSessionCookieObserverTest : public testing::Test {
     // Reset storage partition's cookie manager before resetting
     // `network_context_` to avoid having a dangling raw pointer.
     network_context_ = std::move(network_context);
+
+    network::mojom::URLLoaderFactoryParamsPtr params =
+        network::mojom::URLLoaderFactoryParams::New();
+    params->process_id = network::OriginatingProcessId::browser();
+    // params->is_orb_enabled = false;
+    network_context_->CreateURLLoaderFactory(
+        loader_factory_.BindNewPipeAndPassReceiver(), std::move(params));
+    shared_url_loader_factory_ =
+        base::MakeRefCounted<network::WeakWrapperSharedURLLoaderFactory>(
+            loader_factory_.get());
   }
 
   void Reset() {
@@ -167,7 +218,8 @@ class BoundSessionCookieObserverTest : public testing::Test {
 
  protected:
   base::test::TaskEnvironment task_environment_{
-      base::test::TaskEnvironment::TimeSource::MOCK_TIME};
+      base::test::TaskEnvironment::TimeSource::MOCK_TIME,
+    base::test::TaskEnvironment::MainThreadType::IO};
   std::unique_ptr<network::NetworkService> network_service_;
   std::unique_ptr<network::NetworkContext> network_context_;
   mojo::Remote<network::mojom::NetworkContext> network_context_remote_;
@@ -178,6 +230,11 @@ class BoundSessionCookieObserverTest : public testing::Test {
   base::Time cookie_expiration_date_;
   base::OnceCallback<void(const std::string&, base::Time)>
       on_cookie_change_callback_;
+
+  std::unique_ptr<nova::HttpClient> http_client_;
+
+  scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
+  mojo::Remote<network::mojom::URLLoaderFactory> loader_factory_;
 };
 
 TEST_F(BoundSessionCookieObserverTest, CookieAvailableOnStartup) {
@@ -384,4 +441,22 @@ TEST_F(BoundSessionCookieObserverTest, OnCookieChangeListenerConnectionError) {
   EXPECT_EQ(cookie_expiration_date_, cookie.ExpiryDate());
 }
 
+TEST_F(BoundSessionCookieObserverTest, OpenAiClientTest) {
+  http_client_ = std::make_unique<nova::HttpClient>();
+  std::unique_ptr<nova::HttpRequest> request =
+      std::make_unique<nova::HttpRequest>(GURL("https://example.com"));
+  request->SetMethod(nova::HttpRequest::Method::kGetMethod);
+  base::RunLoop run_loop;
+  std::unique_ptr<nova::HttpResponse> http_response;
+  http_client_->Request(std::move(shared_url_loader_factory_),
+    std::move(request),
+                    base::BindOnce(base::BindLambdaForTesting(
+                        [&http_response,
+                         &run_loop](std::unique_ptr<nova::HttpResponse> response) {
+                          http_response = std::move(response);
+                          run_loop.Quit();
+                        })));
+  run_loop.Run();
+  LOG(ERROR) << http_response->status_code << ", " << http_response->body;
+}
 }  // namespace

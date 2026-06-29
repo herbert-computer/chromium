@@ -6998,6 +6998,7 @@ test("unit_tests") {
 
   public_deps = [ "//chrome/browser/media/webrtc" ]
   deps = [
+    "//nova/base/http_client",
     ":test_interfaces",
     ":test_support",
     ":test_support_unit",

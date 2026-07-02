@@ -43,6 +43,9 @@
 #include "components/update_client/update_client_internal.h"
 #include "components/update_client/update_engine.h"
 #include "components/update_client/utils.h"
+#if defined(ENABLE_NOVA)
+#include "nova/updater/component_updater/nova_component_update_checker.h"
+#endif
 #include "url/gurl.h"
 
 namespace update_client {
@@ -312,9 +315,16 @@ void UpdateClientImpl::SendPing(const CrxComponent& crx_component,
 
 scoped_refptr<UpdateClient> UpdateClientFactory(
     scoped_refptr<Configurator> config) {
+#if defined(ENABLE_NOVA)
+  UpdateChecker::Factory update_checker_factory =
+      base::BindRepeating(&NovaComponentUpdateChecker::Create);
+#else
+  UpdateChecker::Factory update_checker_factory =
+      base::BindRepeating(&UpdateChecker::Create);
+#endif
   return base::MakeRefCounted<UpdateClientImpl>(
       config, base::MakeRefCounted<PingManager>(config),
-      base::BindRepeating(&UpdateChecker::Create));
+      update_checker_factory);
 }
 
 void RegisterPrefs(PrefRegistrySimple* registry) {

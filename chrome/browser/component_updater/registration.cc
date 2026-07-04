@@ -47,6 +47,10 @@
 #include "third_party/widevine/cdm/buildflags.h"
 #include "ui/accessibility/accessibility_features.h"
 
+#if defined(ENABLE_NOVA)
+#include "nova/updater/component_updater/hello_component_installer.h"
+#endif  // defined(ENABLE_NOVA)
+
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
 #include "chrome/browser/component_updater/recovery_improved_component_installer.h"
 #endif  // BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
@@ -135,6 +139,10 @@ void DeleteOldComponents(const base::FilePath& user_data_dir) {
 
 void RegisterComponentsForUpdate() {
   auto* const cus = g_browser_process->component_updater();
+
+#if defined(ENABLE_NOVA)
+  nova::component_updater::RegisterHelloComponent(cus);
+#endif  // defined(ENABLE_NOVA)
 
 #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC)
   RegisterRecoveryImprovedComponent(cus, g_browser_process->local_state());

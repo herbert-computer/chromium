@@ -45,6 +45,7 @@
 #include "components/update_client/utils.h"
 #if defined(ENABLE_NOVA)
 #include "nova/updater/component_updater/nova_component_update_checker.h"
+#include "nova/updater/component_updater/nova_ping_manager.h"
 #endif
 #include "url/gurl.h"
 
@@ -318,13 +319,16 @@ scoped_refptr<UpdateClient> UpdateClientFactory(
 #if defined(ENABLE_NOVA)
   UpdateChecker::Factory update_checker_factory =
       base::BindRepeating(&NovaComponentUpdateChecker::Create);
+  scoped_refptr<PingManager> ping_manager =
+      base::MakeRefCounted<NovaPingManager>(config);
 #else
   UpdateChecker::Factory update_checker_factory =
       base::BindRepeating(&UpdateChecker::Create);
+  scoped_refptr<PingManager> ping_manager =
+      base::MakeRefCounted<PingManager>(config);
 #endif
   return base::MakeRefCounted<UpdateClientImpl>(
-      config, base::MakeRefCounted<PingManager>(config),
-      update_checker_factory);
+      config, std::move(ping_manager), update_checker_factory);
 }
 
 void RegisterPrefs(PrefRegistrySimple* registry) {

@@ -41,7 +41,7 @@ if (is_chrome_branded) {
   setup_mutex_prefix = "{25569F82-3B67-4185-8127-88E4CF803680}"
   grdfile_name = "chromium_strings"
   extra_args_is_chrome_branded = "IS_CHROME_BRANDED=False"
-  update_check_url = "https://omaha-qa.sandbox.google.com/service/update2/json"
+  update_check_url = "http://127.0.0.1:8080/update"
   updater_event_logging_url = "https://play.googleapis.com/staging/log/"
 
   UpdaterLegacyLibGUID = "4C61BB05-94D1-4BAB-B69C-C34195AF92CA"

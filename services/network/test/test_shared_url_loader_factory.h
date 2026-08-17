@@ -51,9 +51,11 @@ class TestSharedURLLoaderFactory : public SharedURLLoaderFactory {
 
   int num_created_loaders() const { return num_created_loaders_; }
 
+ protected:
+  ~TestSharedURLLoaderFactory() override;
+
  private:
   friend class base::RefCounted<TestSharedURLLoaderFactory>;
-  ~TestSharedURLLoaderFactory() override;
 
   // Tracks the number of times |CreateLoaderAndStart()| has been called.
   int num_created_loaders_ = 0;

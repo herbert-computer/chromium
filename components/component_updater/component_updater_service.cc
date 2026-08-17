@@ -46,6 +46,10 @@ namespace {
 using CrxInstaller = ::update_client::CrxInstaller;
 using UpdateClient = ::update_client::UpdateClient;
 
+#if defined(ENABLE_NOVA)
+constexpr char kNovaComponentUpdaterAttribute[] = "nova_component_updater";
+#endif  // defined(ENABLE_NOVA)
+
 enum UpdateType {
   UPDATE_TYPE_MANUAL = 0,
   UPDATE_TYPE_AUTOMATIC,
@@ -303,8 +307,17 @@ update_client::CrxComponent CrxUpdateService::ToCrxComponent(
       component.allow_updates_on_metered_connection;
 
   crx.brand = brand_;
+#if defined(ENABLE_NOVA)
+  if (component.installer_attributes.contains(kNovaComponentUpdaterAttribute)) {
+    crx.crx_format_requirement = crx_file::VerifierFormat::CRX3;
+  } else {
+    crx.crx_format_requirement =
+        crx_file::VerifierFormat::CRX3_WITH_PUBLISHER_PROOF;
+  }
+#else
   crx.crx_format_requirement =
       crx_file::VerifierFormat::CRX3_WITH_PUBLISHER_PROOF;
+#endif  // defined(ENABLE_NOVA)
 
   bool component_updates_enabled =
       config_->GetPrefService()->GetBoolean(prefs::kComponentUpdatesEnabled);

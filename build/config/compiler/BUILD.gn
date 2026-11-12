@@ -301,7 +301,11 @@ use_clang_warning_suppression_file =
 # source root and might have conflicting versions of some headers) can remove
 # this and specify their own include paths.
 config("default_include_dirs") {
-  include_dirs = [
+  include_dirs = []
+  if (defined(enable_nova) && enable_nova) {
+    include_dirs += [ "$root_gen_dir/nova/chromium/overlay" ]
+  }
+  include_dirs += [
     "//",
     root_gen_dir,
   ]

@@ -305,6 +305,11 @@ config("default_include_dirs") {
     "//",
     root_gen_dir,
   ]
+  if (defined(enable_nova) && enable_nova) {
+    default_dirs = include_dirs
+    include_dirs = []
+    include_dirs = [ "$root_gen_dir/nova/chromium/overlay" ] + default_dirs
+  }
 }
 
 # Compiler instrumentation can introduce dependencies in DSOs to symbols in
